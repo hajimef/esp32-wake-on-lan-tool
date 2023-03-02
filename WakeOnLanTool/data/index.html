@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ESP32 Wake On Lan Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <script type="text/javascript">
+var machines = [
+  [ "PC01", "12:34:56:78:9A:BC" ],
+  [ "PC02", "23:45:67:89:AB:CD" ],
+
+];
+    </script>
+  </head>
+  <body>
+    <div class="col-lg-8 mx-auto p-4 py-md-5">
+      <main>
+        <h1>ESP32 Wake On Lan Tool</h10>
+        <hr>
+        <h2>端末を選択してください</h2>
+        <p>
+          <button type="button" id="sel_all" class="btn btn-primary">すべて選択</button>
+          <button type="button" id="desel_all" class="btn btn-primary">すべて選択解除</button>
+        </p>
+        <ul id="machines" class="list-group" style="margin-bottom: 1em;"></ul>
+        <p>
+          <button type="button" id="wol" class="btn btn-primary">Wake On Lan</button>
+        </p>
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+function sel_all(f) {
+  var chks = $(".form-check-input");
+  for (var i = 0; i < chks.length; i++) {
+    chk = $(chks[i])
+    chk.prop('checked', f);
+  }
+}
+
+function wake_on_lan() {
+  var chks = $(".form-check-input");
+  var lis = $(".list-group-item")
+  var i = 0;
+  var l = chks.length;
+
+  function wake_on_lan_start() {
+    var chk = $(chks[i]);
+    var w;
+    if (chk.prop('checked')) {
+      wait = 300;
+      $(lis[i]).addClass('active');
+      $.ajax({
+        url: '/on',
+        data: { 'mac': machines[i][1] },
+      }).done(function() { console.log("done", i) });
+    }
+    else {
+      wait = 10;
+    }
+    setTimeout(wake_on_lan_end, wait);
+  }
+
+  function wake_on_lan_end() {
+    $(lis[i]).removeClass('active');
+    $(chks[i]).prop('checked', false);
+    i++;
+    if (i < l) {
+      setTimeout(wake_on_lan_start, 10);
+    }
+    else {
+      setTimeout(function() {
+        $.ajax('/ready');
+        alert('Wake On Lanを終了しました');
+      }, 10);
+    }
+  }
+
+  setTimeout(wake_on_lan_start, 10);
+}
+
+$(function() {
+  var ul = $("#machines");
+  for (var i = 0; i < machines.length; i++) {
+    var e = machines[i];
+    var html = "";
+    html += "<li class=\"list-group-item\">";
+    html += "<input class=\"form-check-input\" type=\"checkbox\" value=\"" + e[1] + "\" id=\"m" + i + "\">";
+    html += "<label class=\"form-check-label\" for=\"m" + i + "\">&nbsp;";
+    html += e[0] + "&nbsp;(" + e[1] + ")</li>";
+    ul.append(html);
+  }
+  $("#sel_all").on("click", function() { sel_all(true); });
+  $("#desel_all").on("click", function() { sel_all(false); });
+  $("#wol").on("click", wake_on_lan);
+});
+    </script>
+  </body>
+</html>
